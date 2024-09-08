@@ -76,7 +76,7 @@ TEST(TestRobotiqGripperHardwareInterface, load_urdf)
   rclcpp::Node node{ "test_robotiq_gripper_hardware_interface" };
 
   // Initialize the resource manager
-  hardware_interface::ResourceManager rm(urdf, node.get_node_clock_interface(), node.get_node_logging_interface());
+  hardware_interface::ResourceManager rm(urdf, true, false);
 
   // Check interfaces
   EXPECT_EQ(1u, rm.system_components_size());
