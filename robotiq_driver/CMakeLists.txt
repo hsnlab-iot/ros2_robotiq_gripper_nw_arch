@@ -1,5 +1,3 @@
-# See https://docs.ros.org/en/humble/How-To-Guides/Ament-CMake-Documentation.html
-
 cmake_minimum_required(VERSION 3.8)
 project(robotiq_driver LANGUAGES CXX)
 
@@ -15,36 +13,13 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-find_package(serial REQUIRED)
-
-set(THIS_PACKAGE_INCLUDE_DEPENDS
-  ament_cmake
-  hardware_interface
-  pluginlib
-  rclcpp
-  rclcpp_lifecycle
-  serial
-)
+find_package(serial REQUIRED)  # Ensure serial is found
 
 # Robotiq driver library.
 
 add_library(
   robotiq_driver
   SHARED
-  include/robotiq_driver/fake/fake_driver.hpp
-  include/robotiq_driver/crc_utils.hpp
-  include/robotiq_driver/data_utils.hpp
-  include/robotiq_driver/default_driver.hpp
-  include/robotiq_driver/default_driver_factory.hpp
-  include/robotiq_driver/default_serial.hpp
-  include/robotiq_driver/default_serial_factory.hpp
-  include/robotiq_driver/driver.hpp
-  include/robotiq_driver/driver_exception.hpp
-  include/robotiq_driver/driver_factory.hpp
-  include/robotiq_driver/hardware_interface.hpp
-  include/robotiq_driver/serial.hpp
-  include/robotiq_driver/serial_factory.hpp
-  include/robotiq_driver/visibility_control.hpp
   src/crc_utils.cpp
   src/data_utils.cpp
   src/hardware_interface.cpp
@@ -54,16 +29,26 @@ add_library(
   src/default_serial.cpp
   src/default_serial_factory.cpp
 )
-target_link_libraries(robotiq_driver atomic)
+
+# Link against the serial library
+target_link_libraries(robotiq_driver ${serial_LIBRARIES})
+
+# Include directories
 target_include_directories(
   robotiq_driver
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${serial_INCLUDE_DIRS}  # Add serial include directories
 )
+
 ament_target_dependencies(
   robotiq_driver
-  ${THIS_PACKAGE_INCLUDE_DEPENDS}
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  serial
 )
 
 ###############################################################################
@@ -74,26 +59,19 @@ pluginlib_export_plugin_description_file(hardware_interface hardware_interface_p
 ###############################################################################
 # EXPORTS
 
-# This is necessary to allow this library’s clients to use the syntax
-# target_link_libraries(client <pkg>::<target_name>)
-# Without this a client cannot find this library.
-# It can take an arbitrary list of targets named as EXPORT in an install call.
 ament_export_targets(
   robotiq_driver_targets # Must match the EXPORT label below in the install section.
 )
-# Help downstream packages to find transitive dependencies i.e. export all
-# dependencies required by a package to use this library.
-# When a package calls find_package(epick_driver), CMake looks for a file
-# called epick_driverConfig.cmake which sets up everything another project
-# would need to depend on this one.
 ament_export_dependencies(
-  ${THIS_PACKAGE_INCLUDE_DEPENDS}
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  serial
 )
-# Tell downstream packages where to find our headers.
 ament_export_include_directories(
   include
 )
-# Tell downstream packages our libraries to link against.
 ament_export_libraries(
   robotiq_driver
 )
@@ -101,27 +79,23 @@ ament_export_libraries(
 ###############################################################################
 # INSTALL
 
-# Install all files of the include folder into the give destination.
 install(
     DIRECTORY include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}          # include
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Install our library.
 install(
   TARGETS robotiq_driver
   EXPORT robotiq_driver_targets
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}      # lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}      # bin
-  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 ###############################################################################
 # TESTS
 
-# CTest module automatically creates a BUILD_TESTING option that selects
-# whether to enable testing support (ON by default).
 include(CTest)
 if(BUILD_TESTING)
   add_subdirectory(tests)

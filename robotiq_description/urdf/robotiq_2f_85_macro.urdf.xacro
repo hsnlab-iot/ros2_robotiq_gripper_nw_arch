@@ -12,7 +12,8 @@
         use_fake_hardware:=false
         mock_sensor_commands:=false
         include_ros2_control:=true
-        com_port:=/dev/ttyUSB0">
+        com_port:=/dev/ttyUSB0
+        L2_network_id:=radiodot-network_level L1_network_id:=radiodot-device_level L2_id:=radiodot_L2 L1_id:=radiodot_L1">
 
         <!-- ros2 control include -->
         <xacro:include filename="$(find robotiq_description)/urdf/2f_85.ros2_control.xacro" />
